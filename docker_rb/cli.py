@@ -10,7 +10,9 @@ import utils as u
 @click.option('--output', help='output image')
 @click.option('--no-assert-hostname', is_flag=True,
               help='Disable hostname validation')
-def main(image, output, no_assert_hostname):
+@click.option('--mount', multiple=True,
+              help='Mount volume (format: "src:target[:rw,:ro]")')
+def main(image, output, no_assert_hostname, mount):
     click.secho('\nUpdating image {} (to: {})'.format(
         image, output if output else 'same image'), fg='green')
 
@@ -31,24 +33,28 @@ def main(image, output, no_assert_hostname):
         # execute code inside a container
         click.secho('Running code..., output:', fg='green')
         container_id = u.run_code_in_container(
-            cli, image, code, entrypoint=options['entrypoint'])
+            cli, image, code, mount, entrypoint=options['entrypoint'])
 
         # get logs
-        logs, abort = u.get_logs(cli, container_id)
+        exitcode = cli.wait(container=container_id)
+
+        logs = cli.logs(container_id, stdout=True, stderr=True)
 
         if logs:
-            click.echo(logs)
+            if exitcode < 1:
+                click.echo(logs)
+            else:
+                click.secho(logs, fg='red')
         else:
             click.secho('Nothing', bold=True)
 
         # commit running container to image
-        if not abort:
+        if exitcode < 1:
             cli.commit(container=container_id, repository=output)
             cli.stop(container=container_id)
 
-        cli.wait(container=container_id)
         cli.remove_container(container=container_id)
 
         # restore container's entrypoint and cmd
-        if not abort:
+        if exitcode < 1:
             u.restore_image_options(cli, output, options)
