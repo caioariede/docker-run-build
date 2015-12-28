@@ -40,3 +40,7 @@ You can use the `--mount` option to mount volumes during the run step:
     $ docker-run-build ORIGINAL_IMAGE --mount /home/user1/:/mnt/vol1:rw <<EOF
     cp /mnt/vol1/*.py /app/
     EOF
+
+## Inspiration
+
+This tool was inspired by [this bash script](http://vaab.blog.kal.fr/2015/01/28/docker-update-or-how-to-incrementally-build-images-without-dockerfile/).
