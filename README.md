@@ -1,6 +1,8 @@
 # docker-run-build
 Incrementally build Docker images.
 
+<img src="record.gif">
+
 ## Installation
 
     pip install docker-run-build
